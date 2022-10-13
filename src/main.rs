@@ -52,7 +52,7 @@ fn inner_main() -> Result<()> {
                 return Ok(());
             }
 
-            info!("Found {} tasks:", tasks.len().to_string().bright_yellow());
+            info!("Found {} task(s):", tasks.len().to_string().bright_yellow());
             info!("");
 
             let mut table = Table::new("{:>} {:<} {:<} {:<} {:<}");
@@ -72,7 +72,7 @@ fn inner_main() -> Result<()> {
                         Some(shell) => shell.bright_magenta(),
                         None => "-".bright_black(),
                     },
-                    task.cmd.bright_cyan(),
+                    task.cmd.bright_magenta(),
                 ));
             }
 
