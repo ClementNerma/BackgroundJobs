@@ -89,6 +89,7 @@ fn inner_main() -> Result<()> {
             cmd: run,
             silent,
             ignore_identicals,
+            restart_if_finished,
         }) => {
             let task = Task {
                 name: name.clone(),
@@ -104,6 +105,14 @@ fn inner_main() -> Result<()> {
 
             if let Some(existing) = tasks.get(&name) {
                 if existing.shell == task.shell && existing.cmd == task.cmd && ignore_identicals {
+                    if restart_if_finished && existing.result.is_some() {
+                        if !silent {
+                            success!("Restarting task {}.", name.bright_yellow());
+                        }
+
+                        client.restart(task.name)?;
+                    }
+
                     return Ok(());
                 }
 

@@ -11,6 +11,7 @@ service!(
         fn running_tasks_count() -> usize;
 
         fn run(task: crate::task::Task);
+        fn restart(task_name: String);
         fn logs(task_name: String) -> Option<Vec<String>>;
     }
 );
@@ -82,6 +83,12 @@ mod functions {
                 }
             }
         });
+    }
+
+    pub fn restart(state: Arc<State>, task_name: String) {
+        let task = { state.write().unwrap().tasks.remove(&task_name).unwrap() };
+
+        run(state, task)
     }
 
     pub fn logs(state: Arc<State>, task_name: String) -> Option<Vec<String>> {

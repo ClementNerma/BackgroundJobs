@@ -61,6 +61,9 @@ pub struct RunArgs {
     #[clap(short, long, help = "Ignore identical commands")]
     pub ignore_identicals: bool,
 
+    #[clap(short, long, help = "Restart if finished")]
+    pub restart_if_finished: bool,
+
     #[clap(long, help = "Don't display messages outside of errors")]
     pub silent: bool,
 }
