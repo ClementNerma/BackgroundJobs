@@ -41,6 +41,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
+name = "bjobs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
+ "daemonize-me",
+ "minus",
+ "once_cell",
+ "os_pipe",
+ "rand",
+ "regex",
+ "serde",
+ "serde_json",
+ "tabular",
+ "time",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -103,28 +122,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crony"
-version = "0.3.2"
-dependencies = [
- "anyhow",
- "clap",
- "colored",
- "daemonize-me",
- "dirs",
- "minus",
- "once_cell",
- "os_pipe",
- "pomsky",
- "pomsky-macro",
- "rand",
- "regex",
- "serde",
- "serde_json",
- "tabular",
- "time",
-]
-
-[[package]]
 name = "crossbeam-channel"
 version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -178,26 +175,6 @@ dependencies = [
  "libc",
  "nix",
  "thiserror",
-]
-
-[[package]]
-name = "dirs"
-version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca3aa72a6f96ea37bbc5aa912f6788242832f75369bdfdadcb0e38423f100059"
-dependencies = [
- "dirs-sys",
-]
-
-[[package]]
-name = "dirs-sys"
-version = "0.3.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b1d1d91c932ef41c0f2663aa8b0ca0342d444d842c06914aa0a7e352d0bada6"
-dependencies = [
- "libc",
- "redox_users",
- "winapi",
 ]
 
 [[package]]
@@ -419,34 +396,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pomsky"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac612e14535d899b91c654d041a7b3fdc780966829d417376b5dcc01d0dac212"
-dependencies = [
- "pomsky-syntax",
- "thiserror",
-]
-
-[[package]]
-name = "pomsky-macro"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "002e82a9789a1bce0cf8dbf9db93cad442230adb117fd10acebbc12803461215"
-dependencies = [
- "pomsky",
-]
-
-[[package]]
-name = "pomsky-syntax"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9073be4362b70ab2ad437ef941c915dc0a706d3de4456d39002d11dbb1cee158"
-dependencies = [
- "thiserror",
-]
-
-[[package]]
 name = "ppv-lite86"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -534,17 +483,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "redox_users"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b033d837a7cf162d7993aded9304e30a83213c648b6e389db233191f891e5c2b"
-dependencies = [
- "getrandom",
- "redox_syscall",
- "thiserror",
-]
-
-[[package]]
 name = "regex"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -575,18 +513,18 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "serde"
-version = "1.0.144"
+version = "1.0.145"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f747710de3dcd43b88c9168773254e809d8ddbdf9653b84e2554ab219f17860"
+checksum = "728eb6351430bccb993660dfffc5a72f91ccc1295abaa8ce19b27ebe4f75568b"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.144"
+version = "1.0.145"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94ed3a816fb1d101812f83e789f888322c34e291f894f19590dc310963e87a00"
+checksum = "81fa1584d3d1bcacd84c277a0dfe21f5b0f6accf4a23d04d4c6d61f1af522b4c"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -719,7 +657,6 @@ dependencies = [
  "itoa",
  "libc",
  "num_threads",
- "serde",
 ]
 
 [[package]]

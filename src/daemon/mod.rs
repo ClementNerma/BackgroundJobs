@@ -1,5 +1,6 @@
 mod client;
 mod cmd;
+mod runner;
 mod service;
 mod start;
 
