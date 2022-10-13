@@ -52,7 +52,6 @@ dependencies = [
  "once_cell",
  "os_pipe",
  "rand",
- "regex",
  "serde",
  "serde_json",
  "tabular",
