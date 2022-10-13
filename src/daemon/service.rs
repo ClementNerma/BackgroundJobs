@@ -12,7 +12,7 @@ service!(
 
         fn run(task: crate::task::Task);
         fn restart(task_name: String);
-        fn logs(task_name: String) -> Option<Vec<String>>;
+        fn logs(task_name: String) -> Vec<String>;
     }
 );
 
@@ -89,13 +89,17 @@ mod functions {
         run(state, task)
     }
 
-    pub fn logs(state: Arc<State>, task_name: String) -> Option<Vec<String>> {
+    pub fn logs(state: Arc<State>, task_name: String) -> Vec<String> {
         state
             .read()
             .unwrap()
             .tasks
             .get(&task_name)
-            .map(|exec| exec.output.lock().unwrap().clone())
+            .unwrap()
+            .output
+            .lock()
+            .unwrap()
+            .clone()
     }
 }
 
