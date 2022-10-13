@@ -56,19 +56,17 @@ mod functions {
     }
 
     pub fn run(state: Arc<State>, task: Task) {
-        let output = Arc::new(Mutex::new(vec![]));
-
         state.write().unwrap().tasks.insert(
             task.name.clone(),
             Task {
                 result: None,
-                output: Arc::clone(&output),
+                output: Arc::new(Mutex::new(vec![])),
                 ..task.clone()
             },
         );
 
         std::thread::spawn(move || {
-            let result = runner(&task.cmd, task.shell.as_deref(), output);
+            let result = runner(task.clone());
 
             let mut state = state.write().unwrap();
             let task = state.tasks.get_mut(&task.name).unwrap();

@@ -85,16 +85,18 @@ fn inner_main() -> Result<()> {
 
         Action::Run(RunArgs {
             name,
-            using,
-            cmd: run,
+            using: shell,
+            cmd: task_cmd,
+            start_dir,
             silent,
             ignore_identicals,
             restart_if_finished,
         }) => {
             let task = Task {
                 name: name.clone(),
-                cmd: run,
-                shell: using,
+                cmd: task_cmd,
+                shell,
+                start_dir,
                 result: None,
                 output: Arc::new(Mutex::new(vec![])),
             };

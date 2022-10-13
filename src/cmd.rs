@@ -58,6 +58,9 @@ pub struct RunArgs {
     #[clap(long, help = "The shell to use")]
     pub using: Option<String>,
 
+    #[clap(short, long, help = "Start directory")]
+    pub start_dir: Option<PathBuf>,
+
     #[clap(short, long, help = "Ignore identical commands")]
     pub ignore_identicals: bool,
 

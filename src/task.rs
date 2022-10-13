@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -7,6 +10,7 @@ pub struct Task {
     pub name: String,
     pub shell: Option<String>,
     pub cmd: String,
+    pub start_dir: Option<PathBuf>,
     pub result: Option<TaskResult>,
     pub output: Arc<Mutex<Vec<String>>>,
 }
