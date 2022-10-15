@@ -12,7 +12,7 @@ pub use utils::*;
 
 use std::sync::{atomic::Ordering, Arc, Mutex, RwLock};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use colored::Colorize;
 use minus::Pager;
@@ -113,7 +113,7 @@ fn inner_main() -> Result<()> {
                             success!("Restarting task {}.", name.bright_yellow());
                         }
 
-                        client.restart(task.name)?;
+                        client.restart(task.name)?.map_err(|err| anyhow!("{err}"))?;
                     }
 
                     return Ok(());
@@ -142,7 +142,7 @@ fn inner_main() -> Result<()> {
                 bail!("Task is not running!");
             }
 
-            client.kill(name)?;
+            client.kill(name)?.map_err(|err| anyhow!("{err}"))?;
         }
 
         Action::Check => todo!(),

@@ -11,8 +11,8 @@ service!(
         fn running_tasks_count() -> usize;
 
         fn run(task: crate::task::Task);
-        fn restart(task_name: String);
-        fn kill(task_name: String);
+        fn restart(task_name: String) -> Result<(), String>;
+        fn kill(task_name: String) -> Result<(), String>;
         fn logs(task_name: String) -> Vec<String>;
     }
 );
@@ -84,26 +84,37 @@ mod functions {
         });
     }
 
-    pub fn restart(state: Arc<State>, task_name: String) {
-        let task = { state.write().unwrap().tasks.remove(&task_name).unwrap() };
+    pub fn restart(state: Arc<State>, task_name: String) -> Result<(), String> {
+        let task = {
+            state
+                .write()
+                .unwrap()
+                .tasks
+                .remove(&task_name)
+                .ok_or("Provided task was not found")?
+        };
 
-        run(state, task)
+        run(state, task);
+
+        Ok(())
     }
 
-    pub fn kill(state: Arc<State>, task_name: String) {
-        state
-            .write()
-            .unwrap()
-            .tasks
+    pub fn kill(state: Arc<State>, task_name: String) -> Result<(), String> {
+        let tasks = &mut state.write().unwrap().tasks;
+
+        let task = tasks
             .get(&task_name)
-            .unwrap()
-            .child_handle
-            .write()
-            .unwrap()
+            .ok_or("Provided task does not exist")?;
+
+        let mut handle = task.child_handle.write().unwrap();
+
+        handle
             .as_mut()
             .unwrap()
             .kill()
-            .unwrap()
+            .map_err(|err| format!("Failed to kill task: {err}"))?;
+
+        Ok(())
     }
 
     pub fn logs(state: Arc<State>, task_name: String) -> Vec<String> {
