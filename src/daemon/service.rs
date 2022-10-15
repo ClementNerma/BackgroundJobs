@@ -13,7 +13,7 @@ service!(
         fn run(task: crate::task::Task);
         fn restart(task_name: String) -> Result<(), String>;
         fn kill(task_name: String) -> Result<(), String>;
-        fn logs(task_name: String) -> Vec<String>;
+        fn logs(task_name: String) -> Result<Vec<String>, String>;
     }
 );
 
@@ -117,17 +117,13 @@ mod functions {
         Ok(())
     }
 
-    pub fn logs(state: Arc<State>, task_name: String) -> Vec<String> {
-        state
-            .read()
-            .unwrap()
-            .tasks
-            .get(&task_name)
-            .unwrap()
-            .output
-            .lock()
-            .unwrap()
-            .clone()
+    pub fn logs(state: Arc<State>, task_name: String) -> Result<Vec<String>, String> {
+        let tasks = &state.read().unwrap().tasks;
+        let task = tasks.get(&task_name).ok_or("Provided task was not found")?;
+
+        let logs = task.output.lock().unwrap();
+
+        Ok(logs.clone())
     }
 }
 

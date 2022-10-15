@@ -233,7 +233,10 @@ fn inner_main() -> Result<()> {
         Action::Logs(LogsArgs { task_name }) => {
             let mut client = DaemonClient::connect(&cmd.socket_path)?;
 
-            let logs = client.logs(task_name)?.join("\n");
+            let logs = client
+                .logs(task_name)?
+                .map_err(|err| anyhow!("{err}"))?
+                .join("\n");
 
             let output = Pager::new();
 
