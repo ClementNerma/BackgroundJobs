@@ -10,7 +10,7 @@ mod utils;
 use utils::logging::PRINT_DEBUG_MESSAGES;
 pub use utils::*;
 
-use std::sync::{atomic::Ordering, Arc, Mutex};
+use std::sync::{atomic::Ordering, Arc, Mutex, RwLock};
 
 use anyhow::{bail, Context, Result};
 use clap::Parser;
@@ -99,6 +99,7 @@ fn inner_main() -> Result<()> {
                 start_dir,
                 result: None,
                 output: Arc::new(Mutex::new(vec![])),
+                child_handle: Arc::new(RwLock::new(None)),
             };
 
             let mut client = DaemonClient::connect(&cmd.socket_path)?;
@@ -128,30 +129,19 @@ fn inner_main() -> Result<()> {
             }
         }
 
-        Action::Kill(KillArgs { name: _ }) => {
-            todo!()
-            // if !tasks.contains_key(&name) {
-            //     bail!("Task '{}' does not exist.", name.bright_yellow());
-            // }
+        Action::Kill(KillArgs { name }) => {
+            let mut client = DaemonClient::connect(&cmd.socket_path)?;
 
-            // tasks.remove(&name);
+            let tasks = client.tasks()?;
 
-            // write_tasks(&paths, &tasks)?;
+            let task = tasks
+                .get(&name)
+                .with_context(|| format!("Unknown task '{name}'"))?;
 
-            // success!("Successfully removed task {}.", name.bright_yellow());
+            let mut handle = task.child_handle.write().unwrap();
+            let handle = handle.as_mut().context("Task is not running")?;
 
-            // let socket_file = &cmd.socket_path;
-
-            // if is_daemon_running(socket_file)? {
-            //     debug!("Asking the daemon to reload the tasks...");
-
-            //     let mut client = DaemonClient::connect(socket_file)?;
-            //     client.reload_tasks()?;
-
-            //     success!("Daemon successfully reloaded the tasks!");
-            // } else {
-            //     warn!("Warning: the daemon is not running.")
-            // }
+            handle.kill().context("Failed to kill task")?;
         }
 
         Action::Check => todo!(),

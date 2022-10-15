@@ -1,6 +1,7 @@
 use std::{
     path::PathBuf,
-    sync::{Arc, Mutex},
+    process::Child,
+    sync::{Arc, Mutex, RwLock},
 };
 
 use serde::{Deserialize, Serialize};
@@ -13,6 +14,9 @@ pub struct Task {
     pub start_dir: Option<PathBuf>,
     pub result: Option<TaskResult>,
     pub output: Arc<Mutex<Vec<String>>>,
+
+    #[serde(skip_serializing, skip_deserializing)]
+    pub child_handle: Arc<RwLock<Option<Child>>>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]

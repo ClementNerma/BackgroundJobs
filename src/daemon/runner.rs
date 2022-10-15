@@ -34,7 +34,9 @@ pub fn runner(task: Task) -> Result<TaskResult> {
         cmd.current_dir(start_dir);
     }
 
-    let mut handle = cmd.spawn().context("Failed to spawn the command")?;
+    let handle = cmd.spawn().context("Failed to spawn the command")?;
+
+    *task.child_handle.write().unwrap() = Some(handle);
 
     drop(cmd);
 
@@ -49,7 +51,14 @@ pub fn runner(task: Task) -> Result<TaskResult> {
             .push(format!("[{}] {}", get_now(), line));
     }
 
-    let status = handle.wait().context("Failed to run the task's command")?;
+    let status = task
+        .child_handle
+        .write()
+        .unwrap()
+        .take()
+        .unwrap()
+        .wait()
+        .context("Failed to run the task's command")?;
 
     Ok(if status.success() {
         TaskResult::Success
