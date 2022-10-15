@@ -143,6 +143,8 @@ fn inner_main() -> Result<()> {
             }
 
             client.kill(name)?.map_err(|err| anyhow!("{err}"))?;
+
+            success!("Successfully killed task.");
         }
 
         Action::Check => todo!(),
