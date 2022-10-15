@@ -121,9 +121,7 @@ fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) -> ! {
     }
 }
 
-fn fork_exit(_parent_pid: i32, child_pid: i32) -> ! {
-    info!("Started the daemon, waiting for response...");
-
+fn fork_exit(_parent_pid: i32, _child_pid: i32) -> ! {
     let guard = SOCKET_FILE_PATH.lock().unwrap();
     let socket_path = guard.as_ref().unwrap();
 
@@ -134,10 +132,7 @@ fn fork_exit(_parent_pid: i32, child_pid: i32) -> ! {
     let mut client = DaemonClient::connect(socket_path).unwrap();
     client.hello().unwrap();
 
-    success!(
-        "Successfully setup daemon with PID {}!",
-        child_pid.to_string().bright_yellow()
-    );
+    success!("Successfully started BJobs daemon!");
 
     std::process::exit(0);
 }
