@@ -138,10 +138,11 @@ fn inner_main() -> Result<()> {
                 .get(&name)
                 .with_context(|| format!("Unknown task '{name}'"))?;
 
-            let mut handle = task.child_handle.write().unwrap();
-            let handle = handle.as_mut().context("Task is not running")?;
+            if task.result.is_some() {
+                bail!("Task is not running!");
+            }
 
-            handle.kill().context("Failed to kill task")?;
+            client.kill(name)?;
         }
 
         Action::Check => todo!(),

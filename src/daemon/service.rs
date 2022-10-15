@@ -12,6 +12,7 @@ service!(
 
         fn run(task: crate::task::Task);
         fn restart(task_name: String);
+        fn kill(task_name: String);
         fn logs(task_name: String) -> Vec<String>;
     }
 );
@@ -87,6 +88,22 @@ mod functions {
         let task = { state.write().unwrap().tasks.remove(&task_name).unwrap() };
 
         run(state, task)
+    }
+
+    pub fn kill(state: Arc<State>, task_name: String) {
+        state
+            .write()
+            .unwrap()
+            .tasks
+            .get(&task_name)
+            .unwrap()
+            .child_handle
+            .write()
+            .unwrap()
+            .as_mut()
+            .unwrap()
+            .kill()
+            .unwrap()
     }
 
     pub fn logs(state: Arc<State>, task_name: String) -> Vec<String> {
