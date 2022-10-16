@@ -249,12 +249,18 @@ fn inner_main() -> Result<()> {
         }
 
         Action::Logs(LogsArgs { task_name }) => {
-            let mut client = DaemonClient::connect(&socket_path)?;
+            let logs = match task_name {
+                Some(task_name) => {
+                    let mut client = DaemonClient::connect(&socket_path)?;
 
-            let logs = client
-                .logs(task_name)?
-                .map_err(|err| anyhow!("{err}"))?
-                .join("\n");
+                    client
+                        .logs(task_name)?
+                        .map_err(|err| anyhow!("{err}"))?
+                        .join("\n")
+                }
+
+                None => fs::read_to_string(&log_file).context("Failed to read the log file")?,
+            };
 
             let output = Pager::new();
 

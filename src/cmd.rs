@@ -86,5 +86,5 @@ pub struct RemoveArgs {
 #[derive(Args)]
 pub struct LogsArgs {
     #[clap(help = "The task to show the logs of")]
-    pub task_name: String,
+    pub task_name: Option<String>,
 }
