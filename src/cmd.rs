@@ -10,8 +10,12 @@ pub struct Cmd {
     #[clap(short, long, help = "Display debug messages")]
     pub verbose: bool,
 
-    #[clap(short, long, help = "Path to the socket file")]
-    pub socket_path: PathBuf,
+    #[clap(
+        short,
+        long,
+        help = "Path to the socket file (falls back to the 'BJOBS_SOCKET_FILE' environment variable)"
+    )]
+    pub socket_path: Option<PathBuf>,
 
     #[clap(subcommand)]
     pub action: Action,

@@ -10,7 +10,7 @@ mod utils;
 use utils::logging::PRINT_DEBUG_MESSAGES;
 pub use utils::*;
 
-use std::sync::atomic::Ordering;
+use std::{path::PathBuf, sync::atomic::Ordering};
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
@@ -41,9 +41,14 @@ fn inner_main() -> Result<()> {
         PRINT_DEBUG_MESSAGES.store(true, Ordering::SeqCst);
     }
 
+    let socket_path = cmd
+        .socket_path
+        .or_else(|| std::env::var_os("BJOBS_SOCKET_FILE").map(PathBuf::from))
+        .context("Please provide a socket path")?;
+
     match cmd.action {
         Action::List => {
-            let mut client = DaemonClient::connect(&cmd.socket_path)?;
+            let mut client = DaemonClient::connect(&socket_path)?;
 
             let tasks = client.tasks()?;
 
@@ -81,7 +86,7 @@ fn inner_main() -> Result<()> {
         }
 
         Action::Start(args) => {
-            start_daemon(&cmd.socket_path, &args)?;
+            start_daemon(&socket_path, &args)?;
         }
 
         Action::Run(RunArgs {
@@ -100,7 +105,7 @@ fn inner_main() -> Result<()> {
                 start_dir,
             };
 
-            let mut client = DaemonClient::connect(&cmd.socket_path)?;
+            let mut client = DaemonClient::connect(&socket_path)?;
 
             let tasks = client.tasks()?;
 
@@ -132,7 +137,7 @@ fn inner_main() -> Result<()> {
         }
 
         Action::Kill(KillArgs { name }) => {
-            let mut client = DaemonClient::connect(&cmd.socket_path)?;
+            let mut client = DaemonClient::connect(&socket_path)?;
 
             let tasks = client.tasks()?;
 
@@ -156,14 +161,14 @@ fn inner_main() -> Result<()> {
         Action::Status => {
             debug!("Checking daemon's status...");
 
-            if !is_daemon_running(&cmd.socket_path)? {
+            if !is_daemon_running(&socket_path)? {
                 warn!("Daemon is not running.");
                 return Ok(());
             }
 
             debug!("Daemon is running, sending a test request...");
 
-            let mut client = DaemonClient::connect(&cmd.socket_path)?;
+            let mut client = DaemonClient::connect(&socket_path)?;
             let res = client.hello()?;
 
             if res == "Hello" {
@@ -176,12 +181,12 @@ fn inner_main() -> Result<()> {
         Action::Stop => {
             debug!("Asking the daemon to stop...");
 
-            let mut client = DaemonClient::connect(&cmd.socket_path)?;
+            let mut client = DaemonClient::connect(&socket_path)?;
 
             match client.stop() {
                 Ok(()) => {}
                 Err(err) => {
-                    if let Ok(false) = is_daemon_running(&cmd.socket_path) {
+                    if let Ok(false) = is_daemon_running(&socket_path) {
                         success!("Daemon was successfully stopped!");
                         return Ok(());
                     }
@@ -196,7 +201,7 @@ fn inner_main() -> Result<()> {
             let mut had_error = false;
 
             loop {
-                match is_daemon_running(&cmd.socket_path) {
+                match is_daemon_running(&socket_path) {
                     Ok(true) => {}
                     Ok(false) => break,
                     Err(err) => {
@@ -235,7 +240,7 @@ fn inner_main() -> Result<()> {
         }
 
         Action::Logs(LogsArgs { task_name }) => {
-            let mut client = DaemonClient::connect(&cmd.socket_path)?;
+            let mut client = DaemonClient::connect(&socket_path)?;
 
             let logs = client
                 .logs(task_name)?
