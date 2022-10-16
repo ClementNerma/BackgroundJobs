@@ -10,7 +10,7 @@ macro_rules! _format {
         let mut msg = format!($message, $($params)*);
 
         if $crate::utils::logging::PRINT_MESSAGES_DATETIME.load(::std::sync::atomic::Ordering::Relaxed) {
-            msg = format!("[{}] {msg}", $crate::utils::datetime::get_now());
+            msg = format!("[{}] {msg}", $crate::utils::datetime::get_now_second_precision());
         }
 
         msg.$color()
