@@ -1,5 +1,5 @@
 use std::{
-    fs,
+    fs::{self, OpenOptions},
     os::unix::net::UnixListener,
     path::{Path, PathBuf},
     sync::{atomic::Ordering, Arc, Mutex, RwLock},
@@ -26,7 +26,7 @@ use crate::{
 
 static SOCKET_FILE_PATH: Lazy<Mutex<Option<PathBuf>>> = Lazy::new(|| Mutex::new(None));
 
-pub fn start_daemon(socket_path: &Path, args: &DaemonStartArgs) -> Result<()> {
+pub fn start_daemon(socket_path: &Path, log_file: &Path, args: &DaemonStartArgs) -> Result<()> {
     if is_daemon_running(&socket_path)? {
         if args.ignore_started {
             return Ok(());
@@ -41,9 +41,15 @@ pub fn start_daemon(socket_path: &Path, args: &DaemonStartArgs) -> Result<()> {
 
     *SOCKET_FILE_PATH.lock().unwrap() = Some(socket_path.to_path_buf());
 
+    let log_file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_file)
+        .context("Failed to open the log file")?;
+
     Daemon::new()
-        // .stdout(log_file.try_clone().unwrap())
-        // .stderr(log_file)
+        .stdout(log_file.try_clone().unwrap())
+        .stderr(log_file)
         .setup_post_fork_parent_hook(fork_exit)
         .start()
         .context("Failed to start the daemon")?;

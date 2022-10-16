@@ -53,6 +53,7 @@ fn inner_main() -> Result<()> {
     }
 
     let socket_path = data_dir.join("bjobs.sock");
+    let log_file = data_dir.join("daemon.log");
 
     match cmd.action {
         Action::List => {
@@ -94,7 +95,7 @@ fn inner_main() -> Result<()> {
         }
 
         Action::Start(args) => {
-            start_daemon(&socket_path, &args)?;
+            start_daemon(&socket_path, &log_file, &args)?;
         }
 
         Action::Run(RunArgs {
