@@ -87,30 +87,20 @@ fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) -> ! {
 
             state.write().unwrap().exit = false;
 
-            let mut last_running = 0;
+            let tasks = state.read().unwrap().tasks.clone();
 
-            for task in state.read().unwrap().tasks.values() {
+            info!("[Exiting] Terminating {} tasks...", tasks.len());
+
+            for (i, task) in tasks.values().enumerate() {
+                info!("[Exiting] Terminating task {} / {}...", i + 1, tasks.len());
+
                 if let Some(child) = task.state.lock().unwrap().status.get_child() {
                     // TODO: error management
                     kill(&child).unwrap();
                 }
             }
 
-            loop {
-                let len = state.read().unwrap().tasks.len();
-
-                if len == 0 {
-                    break;
-                }
-
-                if len != last_running {
-                    info!("[Exiting] Waiting for {} tasks to complete...", len);
-                    last_running = len;
-                }
-
-                sleep_ms(100);
-            }
-
+            info!("[Exiting] Terminated all tasks.");
             info!("[Exiting] Now exiting.");
 
             if let Err(err) = fs::remove_file(&socket_path) {
