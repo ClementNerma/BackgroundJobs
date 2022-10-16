@@ -20,13 +20,11 @@ service!(
 );
 
 mod functions {
-    use std::{
-        process::Command,
-        sync::{Arc, RwLock},
-    };
+    use std::sync::{Arc, RwLock};
 
     use crate::{
         daemon::{
+            kill,
             runner::runner,
             task::{TaskStatus, TaskWrapper},
         },
@@ -116,14 +114,7 @@ mod functions {
             .get_child()
             .ok_or("Provided task is not running")?;
 
-        let status = Command::new("pkill")
-            .args(&["-P", &handle.id().to_string()])
-            .status()
-            .map_err(|err| format!("Failed to run the 'pkill' command: {err}"))?;
-
-        if !status.success() {
-            return Err("Command 'pkill' failed".into());
-        }
+        kill::kill(&handle).map_err(|err| format!("{err:?}"))?;
 
         Ok(())
     }
