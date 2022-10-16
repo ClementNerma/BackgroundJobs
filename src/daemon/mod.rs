@@ -3,12 +3,14 @@ mod cmd;
 mod runner;
 mod service;
 mod start;
+mod task;
 
 pub use client::*;
 pub use cmd::*;
 pub use service::daemon::{Client, RequestContent, ResponseContent};
 pub use service::*;
 pub use start::*;
+pub use task::{TaskState, TaskStatus, TaskWrapper};
 
 use std::{io::ErrorKind, os::unix::net::UnixStream, path::Path};
 

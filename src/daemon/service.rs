@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::{service, task::Task};
+use crate::service;
+
+use super::task::TaskWrapper;
 
 service!(
     daemon (functions) {
@@ -18,12 +20,15 @@ service!(
 );
 
 mod functions {
-    use std::sync::{Arc, Mutex, RwLock};
+    use std::sync::{Arc, RwLock};
 
     use crate::{
-        daemon::runner::runner,
+        daemon::{
+            runner::runner,
+            task::{TaskStatus, TaskWrapper},
+        },
         sleep::sleep_ms,
-        task::{Task, TaskResult},
+        task::Task,
     };
 
     use super::Tasks;
@@ -52,34 +57,29 @@ mod functions {
             .unwrap()
             .tasks
             .values()
-            .filter(|task| task.result.is_none())
+            .filter(|task| !task.state.lock().unwrap().status.is_completed())
             .count()
     }
 
     pub fn run(state: Arc<State>, task: Task) {
-        state.write().unwrap().tasks.insert(
-            task.name.clone(),
-            Task {
-                result: None,
-                output: Arc::new(Mutex::new(vec![])),
-                ..task.clone()
-            },
-        );
+        let wrapper = TaskWrapper::new(task);
+
+        state
+            .write()
+            .unwrap()
+            .tasks
+            .insert(wrapper.task.name.clone(), wrapper.clone());
 
         std::thread::spawn(move || {
-            let result = runner(task.clone());
+            let result = runner(wrapper.clone());
 
             let mut state = state.write().unwrap();
-            let task = state.tasks.get_mut(&task.name).unwrap();
+            let task = state.tasks.get_mut(&wrapper.task.name).unwrap();
 
-            match result {
-                Ok(result) => task.result = Some(result),
-
-                Err(err) => {
-                    task.result = Some(TaskResult::RunnerFailed {
-                        message: format!("{err:?}"),
-                    })
-                }
+            if let Err(err) = result {
+                task.state.lock().unwrap().status = TaskStatus::RunnerFailed {
+                    message: format!("{err:?}"),
+                };
             }
         });
     }
@@ -94,7 +94,7 @@ mod functions {
                 .ok_or("Provided task was not found")?
         };
 
-        run(state, task);
+        run(state, task.task);
 
         Ok(())
     }
@@ -106,11 +106,14 @@ mod functions {
             .get(&task_name)
             .ok_or("Provided task does not exist")?;
 
-        let mut handle = task.child_handle.write().unwrap();
+        let mut task_state = task.state.lock().unwrap();
+
+        let handle = task_state
+            .status
+            .get_child()
+            .ok_or("Provided task is not running")?;
 
         handle
-            .as_mut()
-            .unwrap()
             .kill()
             .map_err(|err| format!("Failed to kill task: {err}"))?;
 
@@ -121,7 +124,7 @@ mod functions {
         let tasks = &state.read().unwrap().tasks;
         let task = tasks.get(&task_name).ok_or("Provided task was not found")?;
 
-        let logs = task.output.lock().unwrap();
+        let logs = &task.state.lock().unwrap().output;
 
         Ok(logs.clone())
     }
@@ -141,4 +144,4 @@ impl State {
     }
 }
 
-pub type Tasks = BTreeMap<String, Task>;
+pub type Tasks = BTreeMap<String, TaskWrapper>;

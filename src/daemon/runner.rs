@@ -3,16 +3,15 @@ use std::{
     process::Command,
 };
 
-use crate::{
-    datetime::get_now,
-    task::{Task, TaskResult},
-};
+use crate::datetime::get_now;
 
 use anyhow::{Context, Result};
 
+use super::task::{TaskStatus, TaskWrapper};
+
 pub static DEFAULT_SHELL_CMD: &str = "/bin/sh -c";
 
-pub fn runner(task: Task) -> Result<TaskResult> {
+pub fn runner(TaskWrapper { state, task }: TaskWrapper) -> Result<()> {
     let shell_cmd = task.shell.unwrap_or_else(|| DEFAULT_SHELL_CMD.to_string());
 
     let mut shell_cmd_parts = shell_cmd.split(' ');
@@ -36,7 +35,9 @@ pub fn runner(task: Task) -> Result<TaskResult> {
 
     let handle = cmd.spawn().context("Failed to spawn the command")?;
 
-    *task.child_handle.write().unwrap() = Some(handle);
+    state.lock().unwrap().status = TaskStatus::Running {
+        child: Some(handle),
+    };
 
     drop(cmd);
 
@@ -45,26 +46,29 @@ pub fn runner(task: Task) -> Result<TaskResult> {
     for line in reader.lines() {
         let line = line.unwrap();
 
-        task.output
+        state
             .lock()
-            .expect("Failed to lock command's output")
+            .expect("Failed to lock the command's output")
+            .output
             .push(format!("[{}] {}", get_now(), line));
     }
 
-    let status = task
-        .child_handle
-        .write()
+    let status = state
+        .lock()
         .unwrap()
-        .take()
-        .unwrap()
+        .status
+        .get_child()
+        .context("No child handle in running command's status")?
         .wait()
         .context("Failed to run the task's command")?;
 
-    Ok(if status.success() {
-        TaskResult::Success
+    state.lock().unwrap().status = if status.success() {
+        TaskStatus::Success
     } else {
-        TaskResult::Failed {
+        TaskStatus::Failed {
             code: status.code(),
         }
-    })
+    };
+
+    Ok(())
 }

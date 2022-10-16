@@ -89,10 +89,10 @@ fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) -> ! {
             let mut last_running = 0;
 
             for task in state.read().unwrap().tasks.values() {
-                task.child_handle.write().unwrap().as_mut().map(|child| {
-                    // TODO: handle error here
-                    child.kill()
-                });
+                if let Some(child) = task.state.lock().unwrap().status.get_child() {
+                    // TODO: error management
+                    child.kill().unwrap();
+                }
             }
 
             loop {

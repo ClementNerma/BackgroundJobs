@@ -10,7 +10,7 @@ mod utils;
 use utils::logging::PRINT_DEBUG_MESSAGES;
 pub use utils::*;
 
-use std::sync::{atomic::Ordering, Arc, Mutex, RwLock};
+use std::sync::atomic::Ordering;
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
@@ -20,9 +20,9 @@ use tabular::{row, Table};
 
 use crate::{
     cmd::{Action, Cmd, KillArgs, LogsArgs, RemoveArgs, RunArgs},
-    daemon::{is_daemon_running, start_daemon, DaemonClient},
+    daemon::{is_daemon_running, start_daemon, DaemonClient, TaskStatus, TaskWrapper},
     sleep::sleep_ms,
-    task::{Task, TaskResult},
+    task::Task,
 };
 
 fn main() {
@@ -57,15 +57,16 @@ fn inner_main() -> Result<()> {
 
             let mut table = Table::new("{:>} {:<} {:<} {:<} {:<}");
 
-            for task in tasks.values() {
+            for TaskWrapper { task, state } in tasks.values() {
                 table.add_row(row!(
                     "*".bright_blue(),
                     task.name.bright_yellow(),
-                    match &task.result {
-                        None => "Running".bright_cyan(),
-                        Some(TaskResult::Success) => "Succeeded".bright_green(),
-                        Some(TaskResult::Failed { code: _ }) => "Failed".bright_red(),
-                        Some(TaskResult::RunnerFailed { message }) =>
+                    match &state.lock().unwrap().status {
+                        TaskStatus::NotStartedYet => "Not started yet".bright_black(),
+                        TaskStatus::Running { child: _ } => "Running".bright_cyan(),
+                        TaskStatus::Success => "Succeeded".bright_green(),
+                        TaskStatus::Failed { code: _ } => "Failed".bright_red(),
+                        TaskStatus::RunnerFailed { message } =>
                             format!("Runner failed ({message})").bright_red(),
                     },
                     match &task.shell {
@@ -97,18 +98,19 @@ fn inner_main() -> Result<()> {
                 cmd: task_cmd,
                 shell,
                 start_dir,
-                result: None,
-                output: Arc::new(Mutex::new(vec![])),
-                child_handle: Arc::new(RwLock::new(None)),
             };
 
             let mut client = DaemonClient::connect(&cmd.socket_path)?;
 
             let tasks = client.tasks()?;
 
-            if let Some(existing) = tasks.get(&name) {
+            if let Some(TaskWrapper {
+                task: existing,
+                state,
+            }) = tasks.get(&name)
+            {
                 if existing.shell == task.shell && existing.cmd == task.cmd && ignore_identicals {
-                    if restart_if_finished && existing.result.is_some() {
+                    if restart_if_finished && state.lock().unwrap().status.is_completed() {
                         if !silent {
                             success!("Restarting task {}.", name.bright_yellow());
                         }
@@ -134,11 +136,11 @@ fn inner_main() -> Result<()> {
 
             let tasks = client.tasks()?;
 
-            let task = tasks
+            let wrapper = tasks
                 .get(&name)
                 .with_context(|| format!("Unknown task '{name}'"))?;
 
-            if task.result.is_some() {
+            if !wrapper.state.lock().unwrap().status.is_running() {
                 bail!("Task is not running!");
             }
 
