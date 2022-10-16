@@ -16,7 +16,7 @@ use crate::{
         service::{daemon::process, State},
         DaemonClient, DaemonStartArgs,
     },
-    datetime::get_now,
+    datetime::get_now_second_precision,
     error, info,
     ipc::serve_on_socket,
     logging::PRINT_MESSAGES_DATETIME,
@@ -68,7 +68,11 @@ pub fn start_daemon(socket_path: &Path, log_file: &Path, args: &DaemonStartArgs)
 }
 
 fn daemon_core(socket_path: &Path) -> Result<()> {
-    info!("Successfully started the daemon on {}", get_now());
+    info!(
+        "Successfully started the daemon on {}",
+        get_now_second_precision()
+    );
+
     info!("Setting up the socket...");
 
     let socket = UnixListener::bind(&socket_path)
