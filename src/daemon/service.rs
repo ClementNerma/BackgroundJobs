@@ -116,13 +116,13 @@ mod functions {
             .get_child()
             .ok_or("Provided task is not running")?;
 
-        let status = Command::new("kill")
-            .args(&["-s", "SIGTERM", &handle.id().to_string()])
+        let status = Command::new("pkill")
+            .args(&["-P", &handle.id().to_string()])
             .status()
-            .map_err(|err| format!("Failed to run the 'kill' command: {err}"))?;
+            .map_err(|err| format!("Failed to run the 'pkill' command: {err}"))?;
 
         if !status.success() {
-            return Err("Command 'kill' failed".into());
+            return Err("Command 'pkill' failed".into());
         }
 
         Ok(())
