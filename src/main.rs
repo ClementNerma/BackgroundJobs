@@ -10,7 +10,7 @@ mod utils;
 use utils::logging::PRINT_DEBUG_MESSAGES;
 pub use utils::*;
 
-use std::{path::PathBuf, sync::atomic::Ordering};
+use std::{fs, sync::atomic::Ordering};
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
@@ -41,10 +41,18 @@ fn inner_main() -> Result<()> {
         PRINT_DEBUG_MESSAGES.store(true, Ordering::SeqCst);
     }
 
-    let socket_path = cmd
-        .socket_path
-        .or_else(|| std::env::var_os("BJOBS_SOCKET_FILE").map(PathBuf::from))
-        .context("Please provide a socket path")?;
+    let data_dir = match cmd.custom_data_dir {
+        Some(data_dir) => data_dir,
+        None => dirs::data_local_dir()
+            .context("Failed to get path to local data directory")?
+            .join("bjobs"),
+    };
+
+    if !data_dir.exists() {
+        fs::create_dir(&data_dir).context("Failed to create the data directory")?;
+    }
+
+    let socket_path = data_dir.join("bjobs.sock");
 
     match cmd.action {
         Action::List => {
