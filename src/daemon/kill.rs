@@ -7,10 +7,10 @@ pub fn kill(child: &Child) -> Result<()> {
         .arg("-9")
         .arg(format!("-{}", child.id()))
         .status()
-        .context("Failed to run the 'kill' command")?;
+        .context("Failed to run the 'pkill' command")?;
 
     if !status.success() {
-        bail!("Command 'kill' failed");
+        bail!("Command 'pkill' failed");
     }
 
     Ok(())
