@@ -12,7 +12,6 @@ use once_cell::sync::Lazy;
 use crate::{
     daemon::{
         is_daemon_running,
-        kill::kill,
         service::{daemon::process, State},
         DaemonClient, DaemonStartArgs,
     },
@@ -106,7 +105,7 @@ fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) -> ! {
 
                 if let Some(child) = task.state.lock().unwrap().status.get_child() {
                     // TODO: error management
-                    kill(&child).unwrap();
+                    child.kill().unwrap();
                 }
             }
 

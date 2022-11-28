@@ -6,6 +6,7 @@ use std::{
 use crate::datetime::get_now;
 
 use anyhow::{Context, Result};
+use command_group::CommandGroup;
 
 use super::task::{TaskStatus, TaskWrapper};
 
@@ -33,7 +34,7 @@ pub fn runner(TaskWrapper { state, task }: TaskWrapper) -> Result<()> {
         cmd.current_dir(start_dir);
     }
 
-    let handle = cmd.spawn().context("Failed to spawn the command")?;
+    let handle = cmd.group_spawn().context("Failed to spawn the command")?;
 
     state.lock().unwrap().status = TaskStatus::Running {
         child: Some(handle),

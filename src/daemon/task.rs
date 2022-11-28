@@ -1,8 +1,6 @@
-use std::{
-    process::Child,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
+use command_group::GroupChild;
 use serde::{Deserialize, Serialize};
 
 use crate::task::Task;
@@ -42,7 +40,7 @@ pub enum TaskStatus {
     NotStartedYet,
     Running {
         #[serde(skip_serializing, skip_deserializing)]
-        child: Option<Child>,
+        child: Option<GroupChild>,
     },
     Success,
     Failed {
@@ -81,7 +79,7 @@ impl TaskStatus {
         }
     }
 
-    pub(super) fn get_child(&mut self) -> Option<&mut Child> {
+    pub(super) fn get_child(&mut self) -> Option<&mut GroupChild> {
         match self {
             TaskStatus::Running { child } => Some(child.as_mut().unwrap()),
             _ => None,

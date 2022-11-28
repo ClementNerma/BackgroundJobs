@@ -24,7 +24,6 @@ mod functions {
 
     use crate::{
         daemon::{
-            kill,
             runner::runner,
             task::{TaskStatus, TaskWrapper},
         },
@@ -114,7 +113,7 @@ mod functions {
             .get_child()
             .ok_or("Provided task is not running")?;
 
-        kill::kill(&handle).map_err(|err| format!("{err:?}"))?;
+        handle.kill().map_err(|err| format!("{err:?}"))?;
 
         Ok(())
     }
