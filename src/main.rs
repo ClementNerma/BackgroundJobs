@@ -15,12 +15,12 @@ use std::{fs, sync::atomic::Ordering};
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use colored::Colorize;
-use minus::Pager;
 use tabular::{row, Table};
 
 use crate::{
     cmd::{Action, Cmd, KillArgs, LogsArgs, RemoveArgs, RunArgs},
     daemon::{is_daemon_running, start_daemon, DaemonClient, TaskStatus, TaskWrapper},
+    paging::run_pager,
     sleep::sleep_ms,
     task::Task,
 };
@@ -248,7 +248,11 @@ fn inner_main() -> Result<()> {
             success!("Daemon was successfully stopped!");
         }
 
-        Action::Logs(LogsArgs { task_name }) => {
+        Action::Logs(LogsArgs {
+            task_name,
+            pager,
+            no_less_options,
+        }) => {
             let logs = match task_name {
                 Some(task_name) => {
                     let mut client = DaemonClient::connect(&socket_path)?;
@@ -262,13 +266,11 @@ fn inner_main() -> Result<()> {
                 None => fs::read_to_string(&log_file).context("Failed to read the log file")?,
             };
 
-            let output = Pager::new();
+            let pager = pager
+                .or_else(|| std::env::var("PAGER").ok())
+                .unwrap_or_else(|| "less".to_owned());
 
-            output
-                .set_text(&logs)
-                .context("Failed to write log content to the pager")?;
-
-            minus::page_all(output).context("Pager failed")?;
+            run_pager(&logs, &pager, no_less_options)?;
         }
     }
 

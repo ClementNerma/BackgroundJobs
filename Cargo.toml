@@ -1,6 +1,6 @@
 [package]
 name = "bjobs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Clément Nerma <clement.nerma@gmail.com>"]
 license = "Apache-2.0"
@@ -19,7 +19,6 @@ colored = "2.0.0"
 command-group = "1.0.8"
 daemonize-me = "2.0.1"
 dirs = "4.0.0"
-minus = { version = "5.0.5", features = ["static_output", "search"] }
 once_cell = "1.14.0"
 os_pipe = "1.0.1"
 rand = "0.8.5"
