@@ -40,6 +40,10 @@ pub fn start_daemon(socket_path: &Path, log_file: &Path, args: &DaemonStartArgs)
 
     *SOCKET_FILE_PATH.lock().unwrap() = Some(socket_path.to_path_buf());
 
+    if log_file.exists() {
+        fs::remove_file(&log_file).context("Failed to remove the log file")?;
+    }
+
     let log_file = OpenOptions::new()
         .create(true)
         .append(true)
