@@ -72,8 +72,13 @@ pub struct Request<T> {
     pub content: T,
 }
 
+#[derive(Deserialize)]
+pub struct PartialRequest {
+    pub id: u64,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Response<T> {
     pub for_id: u64,
-    pub result: T,
+    pub result: Result<T, String>,
 }

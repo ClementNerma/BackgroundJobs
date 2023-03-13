@@ -9,7 +9,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{error, sleep::sleep_ms};
 
-use super::{Request, Response};
+use super::{PartialRequest, Request, Response};
 
 pub fn serve_on_socket<A: DeserializeOwned, B: Serialize, S: Send + Sync + 'static>(
     listener: UnixListener,
@@ -60,26 +60,25 @@ fn serve_client<A: DeserializeOwned, B: Serialize, S>(
             break;
         }
 
-        let Request { id, content } = match serde_json::from_str::<Request<A>>(&message) {
-            Ok(req) => req,
-            Err(err) => {
-                error!("Failed to parse request from client: {err}");
-                short_sleep();
-                continue;
-            }
+        let res = match serde_json::from_str::<Request<A>>(&message) {
+            Ok(Request { id, content }) => Response {
+                for_id: id,
+                result: Ok(process(content, Arc::clone(&state))),
+            },
+
+            Err(err) => match serde_json::from_str::<PartialRequest>(&message) {
+                Ok(PartialRequest { id }) => Response {
+                    for_id: id,
+                    result: Err(format!("Failed to parse client request: {err}")),
+                },
+
+                Err(_) => {
+                    error!("Failed to parse request from client: {err}");
+                    short_sleep();
+                    continue;
+                }
+            },
         };
-
-        // info!("Treating message from client (message ID = {})...", id);
-
-        let res = Response {
-            for_id: id,
-            result: process(content, Arc::clone(&state)),
-        };
-
-        // info!(
-        //     "Finished treating message from client (message ID = {}).",
-        //     id
-        // );
 
         let mut res = match serde_json::to_string(&res) {
             Ok(res) => res,

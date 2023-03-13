@@ -4,7 +4,7 @@ use std::{
     os::unix::net::UnixStream,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use serde::{de::DeserializeOwned, Serialize};
 
 use super::{Request, Response};
@@ -56,6 +56,8 @@ impl<A: Serialize, B: DeserializeOwned> SocketClient<A, B> {
         // TODO: queue system with untreated responses
         assert_eq!(req.id, response.for_id);
 
-        Ok(response.result)
+        Ok(response
+            .result
+            .map_err(|err| anyhow!("Server returned an error: {err}"))?)
     }
 }
