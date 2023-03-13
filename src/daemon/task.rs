@@ -66,10 +66,6 @@ impl Clone for TaskStatus {
 }
 
 impl TaskStatus {
-    pub fn is_running(&self) -> bool {
-        matches!(self, TaskStatus::Running { child: _ })
-    }
-
     pub fn is_completed(&self) -> bool {
         match self {
             TaskStatus::NotStartedYet | TaskStatus::Running { child: _ } => false,

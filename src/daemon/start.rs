@@ -125,11 +125,6 @@ fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) -> ! {
 
         sleep_ms(100);
     }
-
-    #[allow(unreachable_code)]
-    {
-        unreachable!()
-    }
 }
 
 fn fork_exit(_parent_pid: i32, _child_pid: i32) -> ! {

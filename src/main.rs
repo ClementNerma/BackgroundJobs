@@ -148,19 +148,17 @@ fn inner_main() -> Result<()> {
         Action::Kill(KillArgs { name }) => {
             let mut client = DaemonClient::connect(&socket_path)?;
 
-            let tasks = client.tasks()?;
-
-            let wrapper = tasks
-                .get(&name)
-                .with_context(|| format!("Unknown task '{name}'"))?;
-
-            if !wrapper.state.lock().unwrap().status.is_running() {
-                bail!("Task is not running!");
-            }
-
             client.kill(name)?.map_err(|err| anyhow!("{err}"))?;
 
             success!("Successfully killed task.");
+        }
+
+        Action::Remove(RemoveArgs { name }) => {
+            let mut client = DaemonClient::connect(&socket_path)?;
+
+            client.remove(name)?.map_err(|err| anyhow!("{err}"))?;
+
+            success!("Successfully removed task.");
         }
 
         Action::Check(CheckArgs { succeeded, silent }) => {
@@ -215,32 +213,6 @@ fn inner_main() -> Result<()> {
             if failed {
                 std::process::exit(1);
             }
-        }
-
-        Action::Remove(RemoveArgs { name }) => {
-            let mut client = DaemonClient::connect(&socket_path)?;
-
-            let tasks = client.tasks()?;
-
-            let wrapper = tasks
-                .get(&name)
-                .with_context(|| format!("Unknown task '{name}'"))?;
-
-            match wrapper.state.lock().unwrap().status {
-                TaskStatus::NotStartedYet => {
-                    bail!("Cannot remove task as it is waiting to be run");
-                }
-
-                TaskStatus::Running { child: _ } => {
-                    bail!("Cannot remove task as it is currently running.");
-                }
-
-                TaskStatus::Success
-                | TaskStatus::Failed { code: _ }
-                | TaskStatus::RunnerFailed { message: _ } => {
-                    client.remove(name)?.map_err(|err| anyhow!("{err}"))?;
-                }
-            };
         }
 
         Action::Status => {
