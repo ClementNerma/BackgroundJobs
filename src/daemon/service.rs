@@ -15,6 +15,7 @@ service!(
         fn run(task: crate::task::Task);
         fn restart(task_name: String) -> Result<(), String>;
         fn kill(task_name: String) -> Result<(), String>;
+        fn remove(task_name: String) -> Result<(), String>;
         fn logs(task_name: String) -> Result<Vec<String>, String>;
     }
 );
@@ -116,6 +117,35 @@ mod functions {
         handle.kill().map_err(|err| format!("{err:?}"))?;
 
         Ok(())
+    }
+
+    pub fn remove(state: Arc<State>, task_name: String) -> Result<(), String> {
+        let tasks = &mut state.write().unwrap().tasks;
+
+        let task = tasks
+            .get(&task_name)
+            .ok_or("Provided task does not exist")?;
+
+        let task_state = task.state.lock().unwrap();
+
+        match task_state.status {
+            TaskStatus::NotStartedYet => {
+                Err("Cannot remove task as it is waiting to be run".to_string())
+            }
+
+            TaskStatus::Running { child: _ } => {
+                Err("Cannot remove task as it is currently running.".to_string())
+            }
+
+            TaskStatus::Success
+            | TaskStatus::Failed { code: _ }
+            | TaskStatus::RunnerFailed { message: _ } => {
+                drop(task_state);
+
+                tasks.remove(&task_name).unwrap();
+                Ok(())
+            }
+        }
     }
 
     pub fn logs(state: Arc<State>, task_name: String) -> Result<Vec<String>, String> {
