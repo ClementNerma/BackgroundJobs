@@ -18,7 +18,7 @@ use colored::Colorize;
 use tabular::{row, Table};
 
 use crate::{
-    cmd::{Action, Cmd, KillArgs, LogsArgs, RemoveArgs, RunArgs},
+    cmd::{Action, CheckArgs, Cmd, KillArgs, LogsArgs, RemoveArgs, RunArgs},
     daemon::{is_daemon_running, start_daemon, DaemonClient, TaskStatus, TaskWrapper},
     paging::run_pager,
     sleep::sleep_ms,
@@ -163,7 +163,59 @@ fn inner_main() -> Result<()> {
             success!("Successfully killed task.");
         }
 
-        Action::Check => todo!(),
+        Action::Check(CheckArgs { succeeded, silent }) => {
+            let mut client = DaemonClient::connect(&socket_path)?;
+
+            let tasks = client.tasks()?;
+
+            if tasks.is_empty() {
+                info!("No task found.");
+                return Ok(());
+            }
+
+            let mut failed = false;
+
+            let mut fail = |task_name: &str, exit_msg: &str| {
+                if !silent {
+                    error!("Task {} exited ({})", task_name.bright_yellow(), exit_msg);
+                }
+
+                failed = true;
+            };
+
+            for (name, task) in tasks {
+                match &task.state.lock().unwrap().status {
+                    TaskStatus::NotStartedYet | TaskStatus::Running { child: _ } => {}
+
+                    TaskStatus::Success => {
+                        if succeeded {
+                            fail(&name, &"gracefully".bright_green());
+                        }
+                    }
+
+                    TaskStatus::Failed { code } => {
+                        fail(
+                            &name,
+                            &match code {
+                                None => "failed - no exit code".bright_yellow(),
+                                Some(code) => {
+                                    format!("failed with exit code {code}").bright_yellow()
+                                }
+                            },
+                        );
+                    }
+
+                    TaskStatus::RunnerFailed { message } => fail(
+                        &name,
+                        &format!("task runner failed with message '{message}'").bright_yellow(),
+                    ),
+                }
+            }
+
+            if failed {
+                std::process::exit(1);
+            }
+        }
 
         Action::Remove(RemoveArgs { name: _ }) => todo!(),
 

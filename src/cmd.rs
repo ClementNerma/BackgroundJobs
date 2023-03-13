@@ -22,8 +22,8 @@ pub enum Action {
     #[clap(about = "List all tasks")]
     List,
 
-    #[clap(about = "Check if any task recently failed")]
-    Check,
+    #[clap(about = "Check if any task failed")]
+    Check(CheckArgs),
 
     #[clap(about = "Start a task")]
     Run(RunArgs),
@@ -45,6 +45,15 @@ pub enum Action {
 
     #[clap(about = "Display the logs")]
     Logs(LogsArgs),
+}
+
+#[derive(Args)]
+pub struct CheckArgs {
+    #[clap(long, help = "Report succeeded tasks as well")]
+    pub succeeded: bool,
+
+    #[clap(long, help = "Don't display messages outside of errors")]
+    pub silent: bool,
 }
 
 #[derive(Args)]
