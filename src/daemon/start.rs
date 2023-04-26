@@ -26,7 +26,7 @@ use crate::{
 static SOCKET_FILE_PATH: Lazy<Mutex<Option<PathBuf>>> = Lazy::new(|| Mutex::new(None));
 
 pub fn start_daemon(socket_path: &Path, log_file: &Path, args: &DaemonStartArgs) -> Result<()> {
-    if is_daemon_running(&socket_path)? {
+    if is_daemon_running(socket_path)? {
         if args.ignore_started {
             return Ok(());
         }
@@ -35,19 +35,19 @@ pub fn start_daemon(socket_path: &Path, log_file: &Path, args: &DaemonStartArgs)
     }
 
     if socket_path.exists() {
-        fs::remove_file(&socket_path).context("Failed to remove the existing socket file")?;
+        fs::remove_file(socket_path).context("Failed to remove the existing socket file")?;
     }
 
     *SOCKET_FILE_PATH.lock().unwrap() = Some(socket_path.to_path_buf());
 
     if log_file.exists() {
-        fs::remove_file(&log_file).context("Failed to remove the log file")?;
+        fs::remove_file(log_file).context("Failed to remove the log file")?;
     }
 
     let log_file = OpenOptions::new()
         .create(true)
         .append(true)
-        .open(&log_file)
+        .open(log_file)
         .context("Failed to open the log file")?;
 
     Daemon::new()
@@ -78,7 +78,7 @@ fn daemon_core(socket_path: &Path) -> Result<()> {
 
     info!("Setting up the socket...");
 
-    let socket = UnixListener::bind(&socket_path)
+    let socket = UnixListener::bind(socket_path)
         .context("Failed to create socket with the provided path")?;
 
     info!("Launching a separate thread for the socket listener...");
@@ -116,7 +116,7 @@ fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) -> ! {
             info!("[Exiting] Terminated all tasks.");
             info!("[Exiting] Now exiting.");
 
-            if let Err(err) = fs::remove_file(&socket_path) {
+            if let Err(err) = fs::remove_file(socket_path) {
                 error!("Failed to remove the socket file, this might cause problem during the next start: {err}");
             }
 

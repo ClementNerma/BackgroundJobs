@@ -57,7 +57,7 @@ impl Clone for TaskStatus {
             Self::NotStartedYet => Self::NotStartedYet,
             Self::Running { child: _ } => Self::Running { child: None },
             Self::Success => Self::Success,
-            Self::Failed { code } => Self::Failed { code: code.clone() },
+            Self::Failed { code } => Self::Failed { code: *code },
             Self::RunnerFailed { message } => Self::RunnerFailed {
                 message: message.clone(),
             },

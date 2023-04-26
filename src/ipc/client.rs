@@ -56,8 +56,8 @@ impl<A: Serialize, B: DeserializeOwned> SocketClient<A, B> {
         // TODO: queue system with untreated responses
         assert_eq!(req.id, response.for_id);
 
-        Ok(response
+        response
             .result
-            .map_err(|err| anyhow!("Server returned an error: {err}"))?)
+            .map_err(|err| anyhow!("Server returned an error: {err}"))
     }
 }
