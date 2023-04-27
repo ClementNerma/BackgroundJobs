@@ -5,7 +5,6 @@ edition = "2021"
 authors = ["Clément Nerma <clement.nerma@gmail.com>"]
 license = "Apache-2.0"
 description = "A background jobs manager"
-readme = "README.md"
 repository = "https://github.com/ClementNerma/BJobs"
 
 [[bin]]
