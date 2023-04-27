@@ -97,6 +97,9 @@ pub struct LogsArgs {
     #[clap(help = "The task to show the logs of")]
     pub task_name: Option<String>,
 
+    #[clap(short, long, help = "Follow logs")]
+    pub follow: bool,
+
     #[clap(
         long,
         help = "Use an alternative pager (default: PAGER env var, or 'less')"

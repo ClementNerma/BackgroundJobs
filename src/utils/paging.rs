@@ -1,11 +1,12 @@
 use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 
 use anyhow::{bail, Context, Result};
 
 pub fn run_pager(
     fetch_logs: impl Fn() -> Result<String>,
     pager: &str,
+    follow: bool,
     no_less_options: bool,
 ) -> Result<()> {
     let mut cmd = Command::new(pager);
@@ -29,37 +30,42 @@ pub fn run_pager(
 
     let mut prev_logs = String::new();
 
-    loop {
-        match child
-            .try_wait()
-            .with_context(|| format!("Pager command '{pager}' failed"))?
-        {
-            Some(exit) => {
-                if exit.success() {
-                    break;
-                } else {
-                    bail!("Pager command '{pager}' returned a non-zero exit code");
-                }
-            }
+    let mut pipe_logs = |child: &mut Child| -> Result<()> {
+        let logs = fetch_logs()?;
 
-            None => {
-                let new_logs = fetch_logs()?;
+        if logs == prev_logs {
+            return Ok(());
+        }
 
-                if new_logs != prev_logs {
-                    let logs_update = new_logs.strip_prefix(&prev_logs).unwrap();
+        let updated_logs = logs.strip_prefix(&prev_logs).unwrap();
 
-                    let mut stdin = child
-                        .stdin
-                        .as_ref()
-                        .context("Failed to get STDIN pipe from pager")?;
+        let mut stdin = child
+            .stdin
+            .as_ref()
+            .context("Failed to get STDIN pipe from pager")?;
 
-                    write!(stdin, "{logs_update}")
-                        .context("Failed to write data to the pager's STDIN pipe")?;
+        write!(stdin, "{updated_logs}").context("Failed to pipe logs into pager")?;
 
-                    prev_logs = new_logs;
-                }
+        prev_logs = logs;
+
+        Ok(())
+    };
+
+    pipe_logs(&mut child)?;
+
+    let exit = if !follow {
+        child.wait()?
+    } else {
+        loop {
+            match child.try_wait()? {
+                Some(exit) => break exit,
+                None => pipe_logs(&mut child)?,
             }
         }
+    };
+
+    if !exit.success() {
+        bail!("Pager command '{pager}' returned a non-zero exit code");
     }
 
     Ok(())

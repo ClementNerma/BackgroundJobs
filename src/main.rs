@@ -298,6 +298,7 @@ fn inner_main() -> Result<()> {
 
         Action::Logs(LogsArgs {
             task_name,
+            follow,
             pager,
             no_less_options,
         }) => {
@@ -319,6 +320,7 @@ fn inner_main() -> Result<()> {
                     None => fs::read_to_string(&log_file).context("Failed to read the log file"),
                 },
                 &pager,
+                follow,
                 no_less_options,
             )?;
         }
