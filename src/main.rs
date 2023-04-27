@@ -301,24 +301,26 @@ fn inner_main() -> Result<()> {
             pager,
             no_less_options,
         }) => {
-            let logs = match task_name {
-                Some(task_name) => {
-                    let mut client = DaemonClient::connect(&socket_path)?;
-
-                    client
-                        .logs(task_name)?
-                        .map_err(|err| anyhow!("{err}"))?
-                        .join("\n")
-                }
-
-                None => fs::read_to_string(&log_file).context("Failed to read the log file")?,
-            };
-
             let pager = pager
                 .or_else(|| std::env::var("PAGER").ok())
                 .unwrap_or_else(|| "less".to_owned());
 
-            run_pager(&logs, &pager, no_less_options)?;
+            run_pager(
+                || match &task_name {
+                    Some(task_name) => {
+                        let mut client = DaemonClient::connect(&socket_path)?;
+
+                        Ok(client
+                            .logs(task_name.clone())?
+                            .map_err(|err| anyhow!("{err}"))?
+                            .join("\n"))
+                    }
+
+                    None => fs::read_to_string(&log_file).context("Failed to read the log file"),
+                },
+                &pager,
+                no_less_options,
+            )?;
         }
     }
 
