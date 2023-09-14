@@ -7,7 +7,7 @@ use crate::daemon::DaemonStartArgs;
 #[derive(Parser)]
 #[clap(author, version)]
 pub struct Cmd {
-    #[clap(short, long, help = "Display debug messages")]
+    #[clap(short, long, global = true, help = "Display debug messages")]
     pub verbose: bool,
 
     #[clap(short, long, help = "Path to custom data directory")]

@@ -6,7 +6,7 @@ use super::task::TaskWrapper;
 
 service!(
     daemon (functions) {
-        fn hello() -> String;
+        fn hello() -> u32;
         fn stop();
 
         fn tasks() -> super::super::Tasks;
@@ -36,8 +36,8 @@ mod functions {
 
     pub type State = RwLock<super::State>;
 
-    pub fn hello(_: Arc<State>) -> String {
-        "Hello".to_string()
+    pub fn hello(_: Arc<State>) -> u32 {
+        std::process::id()
     }
 
     pub fn stop(state: Arc<State>) {

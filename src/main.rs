@@ -226,13 +226,10 @@ fn inner_main() -> Result<()> {
             debug!("Daemon is running, sending a test request...");
 
             let mut client = DaemonClient::connect(&socket_path)?;
-            let res = client.hello()?;
+            let pid = client.hello()?;
 
-            if res == "Hello" {
-                success!("Daemon is running and responding to requests.");
-            } else {
-                error!("Daemon responsed unsuccessfully to a test request.");
-            }
+            success!("Daemon is running and responding to requests.");
+            debug!("Daemon PID: {pid}");
         }
 
         Action::Stop => {
