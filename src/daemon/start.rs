@@ -21,7 +21,7 @@ use crate::{
     ipc::serve_on_socket,
     logging::PRINT_MESSAGES_DATETIME,
     sleep::sleep_ms,
-    success, warn,
+    success,
 };
 
 static SOCKET_FILE_PATH: Lazy<Mutex<Option<PathBuf>>> = Lazy::new(|| Mutex::new(None));
@@ -74,7 +74,7 @@ fn create_socket(socket_path: &Path) -> Result<UnixListener> {
         Ok(socket) => Ok(socket),
         Err(err) => match err.kind() {
             ErrorKind::AddrInUse => {
-                warn!("Socket file exists but daemon is not running, restarting...");
+                debug!("Socket file exists but daemon is not running, restarting...");
 
                 if let Err(err) = fs::remove_file(socket_path) {
                     match err.kind() {
