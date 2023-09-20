@@ -54,14 +54,9 @@ pub fn start_daemon(socket_path: &Path, log_file: &Path, args: &DaemonStartArgs)
 
     PRINT_MESSAGES_DATETIME.store(true, Ordering::SeqCst);
 
-    if let Err(err) = daemon_core(socket_path, socket) {
-        error!("Daemon exited with an error: {:?}", err);
-        std::process::exit(1);
-    }
-
-    #[allow(unreachable_code)]
-    {
-        unreachable!()
+    match daemon_core(socket_path, socket) {
+        Ok(()) => std::process::exit(0),
+        Err(err) => panic!("Daemon exited with an error: {:?}", err)
     }
 }
 
@@ -101,10 +96,12 @@ fn daemon_core(socket_path: &Path, socket: UnixListener) -> Result<()> {
 
     std::thread::spawn(|| serve_on_socket(socket, process, state_server));
 
-    daemon_core_loop(socket_path, state)
+    daemon_core_loop(socket_path, state);
+
+    Ok(())
 }
 
-fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) -> ! {
+fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) {
     info!("Starting the engine...");
 
     loop {
@@ -130,13 +127,11 @@ fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) -> ! {
             info!("[Exiting] Now exiting.");
 
             if let Err(err) = fs::remove_file(socket_path) {
-                error!("Failed to remove the socket file, this might cause problem during the next start: {err}");
+                error!("Failed to remove the socket file: {err}");
             }
 
-            std::process::exit(0);
+            break;
         }
-
-        sleep_ms(100);
     }
 }
 

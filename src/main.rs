@@ -10,7 +10,7 @@ mod utils;
 use utils::logging::PRINT_DEBUG_MESSAGES;
 pub use utils::*;
 
-use std::{fs, sync::atomic::Ordering};
+use std::{fs, process::ExitCode, sync::atomic::Ordering};
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
@@ -25,10 +25,13 @@ use crate::{
     task::Task,
 };
 
-fn main() {
-    if let Err(err) = inner_main() {
-        error_anyhow!(err);
-        std::process::exit(1);
+fn main() -> ExitCode {
+    match inner_main() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(err) => {
+            error_anyhow!(err);
+            ExitCode::FAILURE
+        }
     }
 }
 
@@ -175,15 +178,7 @@ fn inner_main() -> Result<()> {
                 return Ok(());
             }
 
-            let mut failed = false;
-
-            let mut fail = |task_name: &str, exit_msg: &str| {
-                if !silent {
-                    error!("Task {} exited ({})", task_name.bright_yellow(), exit_msg);
-                }
-
-                failed = true;
-            };
+            let mut failed = None;
 
             for (name, task) in tasks {
                 match &task.state.lock().unwrap().status {
@@ -191,31 +186,35 @@ fn inner_main() -> Result<()> {
 
                     TaskStatus::Success => {
                         if succeeded {
-                            fail(&name, &"gracefully".bright_green());
+                            failed = Some((name, "gracefully".bright_green()));
                         }
                     }
 
                     TaskStatus::Failed { code } => {
-                        fail(
-                            &name,
-                            &match code {
+                        failed = Some((
+                            name,
+                            match code {
                                 None => "failed - no exit code".bright_yellow(),
                                 Some(code) => {
                                     format!("failed with exit code {code}").bright_yellow()
                                 }
                             },
-                        );
+                        ));
                     }
 
-                    TaskStatus::RunnerFailed { message } => fail(
-                        &name,
-                        &format!("task runner failed with message '{message}'").bright_yellow(),
-                    ),
+                    TaskStatus::RunnerFailed { message } => {
+                        failed = Some((
+                            name,
+                            format!("task runner failed with message '{message}'").bright_yellow(),
+                        ))
+                    }
                 }
             }
 
-            if failed {
-                std::process::exit(1);
+            if !silent {
+                if let Some((task_name, exit_msg)) = failed {
+                    bail!("Task {} exited ({})", task_name.bright_yellow(), exit_msg);
+                }
             }
         }
 
