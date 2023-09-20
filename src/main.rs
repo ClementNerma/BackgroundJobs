@@ -294,6 +294,11 @@ fn inner_main() -> Result<()> {
                 sleep_ms(100);
             }
 
+            // Just to ensure process completely exited
+            while socket_path.exists() {
+                sleep_ms(100);
+            }
+
             success!("Daemon was successfully stopped!");
         }
 
