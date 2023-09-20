@@ -20,7 +20,7 @@ impl TaskWrapper {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct TaskState {
     pub status: TaskStatus,
     pub output: Vec<String>,
@@ -51,8 +51,8 @@ pub enum TaskStatus {
     },
 }
 
-impl Clone for TaskStatus {
-    fn clone(&self) -> Self {
+impl TaskStatus {
+    pub fn clone_without_child_id(&self) -> Self {
         match self {
             Self::NotStartedYet => Self::NotStartedYet,
             Self::Running { child: _ } => Self::Running { child: None },
@@ -63,15 +63,22 @@ impl Clone for TaskStatus {
             },
         }
     }
-}
 
-impl TaskStatus {
     pub fn is_completed(&self) -> bool {
         match self {
             TaskStatus::NotStartedYet | TaskStatus::Running { child: _ } => false,
             TaskStatus::Success
             | TaskStatus::Failed { code: _ }
             | TaskStatus::RunnerFailed { message: _ } => true,
+        }
+    }
+
+    pub fn is_failure(&self) -> bool {
+        match self {
+            TaskStatus::NotStartedYet | TaskStatus::Running { child: _ } | TaskStatus::Success => {
+                false
+            }
+            TaskStatus::Failed { code: _ } | TaskStatus::RunnerFailed { message: _ } => true,
         }
     }
 

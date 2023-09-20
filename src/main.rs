@@ -124,8 +124,12 @@ fn inner_main() -> Result<()> {
             }) = tasks.get(&name)
             {
                 if existing.shell == task.shell && existing.cmd == task.cmd && ignore_identicals {
-                    if restart_if_finished && state.lock().unwrap().status.is_completed() {
-                        if !silent {
+                    let status = { state.lock().unwrap().status.clone_without_child_id() };
+
+                    if restart_if_finished && status.is_completed() {
+                        if status.is_failure() {
+                            warn!("Restarting failed task {}.", name.bright_yellow());
+                        } else if !silent {
                             success!("Restarting task {}.", name.bright_yellow());
                         }
 
