@@ -10,7 +10,7 @@ mod utils;
 use utils::logging::PRINT_DEBUG_MESSAGES;
 pub use utils::*;
 
-use std::{fs, process::ExitCode, sync::atomic::Ordering};
+use std::{fs, sync::atomic::Ordering};
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
@@ -25,14 +25,17 @@ use crate::{
     task::Task,
 };
 
-fn main() -> ExitCode {
-    match inner_main() {
-        Ok(()) => ExitCode::SUCCESS,
+fn main() -> ! {
+    let code = match inner_main() {
+        Ok(()) => 0,
         Err(err) => {
             error_anyhow!(err);
-            ExitCode::FAILURE
+            1
         }
-    }
+    };
+
+    // Terminate all threads immediatly (useful for daemon)
+    std::process::exit(code);
 }
 
 fn inner_main() -> Result<()> {

@@ -98,6 +98,8 @@ fn daemon_core(socket_path: &Path, socket: UnixListener) -> Result<()> {
 
     daemon_core_loop(socket_path, state);
 
+    info!("Daemon exited.");
+
     Ok(())
 }
 
