@@ -43,7 +43,7 @@ mod functions {
     pub fn stop(state: Arc<State>) {
         state.write().unwrap().exit = true;
 
-        while state.read().unwrap().exit {
+        while !state.read().unwrap().exiting {
             sleep_ms(20);
         }
     }
@@ -160,6 +160,7 @@ mod functions {
 
 pub struct State {
     pub exit: bool,
+    pub exiting: bool,
     pub tasks: Tasks,
 }
 
@@ -167,6 +168,7 @@ impl State {
     pub fn new() -> Self {
         Self {
             exit: false,
+            exiting: false,
             tasks: Tasks::default(),
         }
     }

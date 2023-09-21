@@ -108,7 +108,7 @@ fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) {
         if state.read().unwrap().exit {
             info!("Exiting safely as requested...");
 
-            state.write().unwrap().exit = false;
+            state.write().unwrap().exiting = true;
 
             let tasks = state.read().unwrap().tasks.clone();
 
