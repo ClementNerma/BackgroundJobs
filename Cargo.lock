@@ -76,7 +76,7 @@ checksum = "b4682ae6287fcf752ecaabbfcc7b6f9b72aa33933dc23a554d853aea8eea8635"
 
 [[package]]
 name = "bjobs"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "anyhow",
  "clap",

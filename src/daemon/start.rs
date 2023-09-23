@@ -3,7 +3,7 @@ use std::{
     io::ErrorKind,
     os::unix::net::UnixListener,
     path::{Path, PathBuf},
-    sync::{atomic::Ordering, Arc, Mutex, RwLock},
+    sync::{atomic::Ordering, Arc, Mutex, RwLock}, time::Duration,
 };
 
 use anyhow::{bail, Context, Result};
@@ -134,6 +134,8 @@ fn daemon_core_loop(socket_path: &Path, state: Arc<RwLock<State>>) {
 
             break;
         }
+
+        std::thread::sleep(Duration::from_millis(50));
     }
 }
 
