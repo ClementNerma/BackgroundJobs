@@ -55,7 +55,7 @@ fn inner_main() -> Result<()> {
     };
 
     if !data_dir.exists() {
-        fs::create_dir(&data_dir).context("Failed to create the data directory")?;
+        fs::create_dir_all(&data_dir).context("Failed to create the data directory")?;
     }
 
     let socket_path = data_dir.join("bjobs.sock");
