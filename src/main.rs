@@ -18,7 +18,7 @@ use colored::Colorize;
 use tabular::{row, Table};
 
 use crate::{
-    cmd::{Action, CheckArgs, Cmd, KillArgs, LogsArgs, RemoveArgs, RunArgs},
+    cmd::{Action, CheckArgs, Cmd, KillArgs, LogsArgs, RemoveArgs, RestartArgs, RunArgs},
     daemon::{is_daemon_running, start_daemon, DaemonClient, TaskStatus, TaskWrapper},
     paging::run_pager,
     sleep::sleep_ms,
@@ -161,6 +161,14 @@ fn inner_main() -> Result<()> {
             client.kill(name)?.map_err(|err| anyhow!("{err}"))?;
 
             success!("Successfully killed task.");
+        }
+
+        Action::Restart(RestartArgs { name }) => {
+            let mut client = DaemonClient::connect(&socket_path)?;
+
+            client.restart(name)?.map_err(|err| anyhow!("{err}"))?;
+
+            success!("Successfully restarted task.");
         }
 
         Action::Remove(RemoveArgs { name }) => {

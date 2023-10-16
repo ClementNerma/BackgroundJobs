@@ -31,6 +31,9 @@ pub enum Action {
     #[clap(about = "Stop a task")]
     Kill(KillArgs),
 
+    #[clap(about = "Restart a task")]
+    Restart(RestartArgs),
+
     #[clap(about = "Remove a task")]
     Remove(RemoveArgs),
 
@@ -83,6 +86,12 @@ pub struct RunArgs {
 #[derive(Args)]
 pub struct KillArgs {
     #[clap(help = "Name of the task to kill")]
+    pub name: String,
+}
+
+#[derive(Args)]
+pub struct RestartArgs {
+    #[clap(help = "Name of the task to restart")]
     pub name: String,
 }
 
